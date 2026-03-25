@@ -1,0 +1,15 @@
+ezhutuka-print
+enkil-if
+alenkil-else
+alenkil_enkil-elif
+pravarthanam-function
+thirichu_nalkuka-return
+varunna_vare-while
+?-let
+urapp - const
+nirthuka-break
+tudaruka-continue
+
+entry point -namaskaram
+exit point-nanni
+input-edkuka

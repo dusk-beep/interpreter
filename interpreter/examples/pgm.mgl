@@ -1,0 +1,12 @@
+pravarthanam kootuka(a, b)
+    s = a + b
+    thirike s
+kainhu
+
+namaskaram
+    x = edukuka("Enter number 1: ")
+    y = edukuka("Enter number 2: ")
+    ans = kootuka(x, y)
+    ezhutuka("The result is: ")
+    ezhutuka(ans)
+nanni
