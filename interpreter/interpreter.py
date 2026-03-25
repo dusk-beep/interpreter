@@ -1,92 +1,138 @@
 class Interpreter:
     def __init__(self, tokens):
         self.tokens = tokens; self.pos = 0; self.current = self.tokens[self.pos]
-        self.variables = {}; self.functions = {}; self.return_val = None; self.is_returning = False
+        self.functions = {}; self.structs = {}; self.stack = [{}]; 
+        self.ret_val = 0; self.is_ret = False
 
     def advance(self):
         self.pos += 1
         if self.pos < len(self.tokens): self.current = self.tokens[self.pos]
 
     def run(self):
-        # 1. Map all functions first (C-style global lookup)
-        for i in range(len(self.tokens)):
-            if self.tokens[i].value == "FUNCTION": self.functions[self.tokens[i+1].value] = i
-        
-        # 2. Find and jump to the 'namaskaram' entry point
-        entry_pos = next((i for i, t in enumerate(self.tokens) if t.value == "ENTRY"), None)
-        if entry_pos is not None:
-            self.pos = entry_pos; self.current = self.tokens[self.pos]; self.advance()
-            while self.current.value != "EXIT":
-                self.execute_statement()
+        idx = 0
+        while idx < len(self.tokens):
+            if self.tokens[idx].value == "FUNCTION": self.functions[self.tokens[idx+1].value] = idx
+            if self.tokens[idx].value == "STRUCT":
+                name = self.tokens[idx+1].value; members = []; j = idx + 2
+                while self.tokens[j].value != "STRUCT_END":
+                    if self.tokens[j].type == "IDENTIFIER": members.append(self.tokens[j].value)
+                    j += 1
+                self.structs[name] = members
+            idx += 1
+        entry = next((i for i, t in enumerate(self.tokens) if t.value == "ENTRY"), None)
+        if entry is not None:
+            self.pos = entry; self.advance()
+            while self.current.value != "EXIT": self.execute()
         print("✅ Program Finished")
 
-    def execute_statement(self):
-        if self.current.value == "FUNCTION": # Skip definitions during main run
-            while self.current.value != "FUNC_END": self.advance()
+    def execute(self):
+        if self.is_ret: return 
+        if self.current.value in ["FUNCTION", "STRUCT"]:
+            target = "FUNC_END" if self.current.value == "FUNCTION" else "STRUCT_END"
+            while self.current.value != target: self.advance()
             self.advance()
-        elif self.current.value == "RETURN":
-            self.advance(); self.return_val = self.evaluate_expression(); self.is_returning = True
+        elif self.current.value == "IF":
+            self.advance(); self.advance(); cond = self.eval_expr(); self.advance()
+            if cond: self.execute()
+            else:
+                while self.current.type != "NEWLINE" and self.current.type != "EOF": self.advance()
+                self.advance()
         elif self.current.value == "PRINT":
-            self.advance(); self.advance(); print(self.evaluate_expression()); self.advance()
+            self.advance(); self.advance(); print(self.eval_expr()); self.advance()
+        elif self.current.value == "RETURN":
+            self.advance(); self.ret_val = self.eval_expr(); self.is_ret = True
         elif self.current.type == "IDENTIFIER":
-            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(": self.execute_func_call()
-            else: self.execute_assignment()
+            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(": self.call_func()
+            else: self.assign()
         else: self.advance()
 
-    def execute_assignment(self):
-        var = self.current.value; self.advance(); self.advance()
-        self.variables[var] = self.evaluate_expression()
+    def assign(self):
+        name = self.current.value; self.advance()
+        if self.current.value == ".":
+            self.advance(); member = self.current.value; self.advance(); self.advance()
+            val = self.eval_expr()
+            obj = self.stack[-1].get(name, self.stack[0].get(name))
+            if isinstance(obj, dict): obj[member] = val
+        else:
+            self.advance(); val = self.eval_expr()
+            if val in self.structs: self.stack[-1][name] = {m: 0 for m in self.structs[val]}
+            else: self.stack[-1][name] = val
 
-    def execute_func_call(self):
+    def call_func(self):
         name = self.current.value; self.advance(); self.advance()
         args = []
         while self.current.value != ")":
-            args.append(self.evaluate_expression())
+            args.append(self.eval_expr())
             if self.current.value == ",": self.advance()
         self.advance()
         if name in self.functions:
-            old_pos = self.pos; self.pos = self.functions[name]
-            self.advance(); self.advance(); self.advance() # FUNCTION name (
+            old_p = self.pos; self.pos = self.functions[name]
+            self.advance(); self.advance(); self.advance()
             params = []
             while self.current.value != ")":
                 params.append(self.current.value); self.advance()
                 if self.current.value == ",": self.advance()
             self.advance()
-            old_vars = self.variables.copy()
-            for i in range(min(len(params), len(args))): self.variables[params[i]] = args[i]
-            self.is_returning = False
-            while self.current.value != "FUNC_END" and not self.is_returning: self.execute_statement()
-            res = self.return_val; self.variables = old_vars; self.pos = old_pos; self.is_returning = False
+            new_frame = {params[i]: args[i] for i in range(min(len(params), len(args)))}
+            self.stack.append(new_frame); prev_ret = self.is_ret; self.is_ret = False
+            while self.current.value != "FUNC_END" and not self.is_ret: self.execute()
+            res = self.ret_val; self.stack.pop(); self.pos = old_p; self.is_ret = prev_ret
             return res
+        return 0
 
-    def evaluate_expression(self):
-        left = self.evaluate_term()
-        while self.current.value in ["+", "-"]:
-            op = self.current.value; self.advance(); right = self.evaluate_term()
-            left = (left + right) if op == "+" else (left - right)
+    def eval_expr(self):
+        left = self.eval_term()
+        while self.current.value in ["+", "-", "==", "!=", ">", "<", ">=", "<="]:
+            op = self.current.value; self.advance(); right = self.eval_term()
+            if op == "+":
+                # FIX: Handle mixed string/number concatenation
+                if isinstance(left, str) or isinstance(right, str):
+                    left = str(left) + str(right)
+                else:
+                    left += right
+            elif op == "-": left -= right
+            elif op == "==": left = 1 if left == right else 0
+            elif op == "!=": left = 1 if left != right else 0
+            elif op == ">": left = 1 if left > right else 0
+            elif op == "<": left = 1 if left < right else 0
+            elif op == ">=": left = 1 if left >= right else 0
+            elif op == "<=": left = 1 if left <= right else 0
         return left
 
-    def evaluate_term(self):
-        left = self.evaluate_factor()
+    def eval_term(self):
+        left = self.eval_fact()
         while self.current.value in ["*", "/"]:
-            op = self.current.value; self.advance(); right = self.evaluate_factor()
+            op = self.current.value; self.advance(); right = self.eval_fact()
             left = (left * right) if op == "*" else (left / right)
         return left
 
-    def evaluate_factor(self):
+    def eval_fact(self):
         t = self.current
         if t.type == "NUMBER":
-            val = float(t.value) if "." in t.value else int(t.value); self.advance(); return val
-        if t.type == "STRING": val = t.value; self.advance(); return val
+            v = float(t.value) if "." in t.value else int(t.value); self.advance(); return v
+        if t.type == "STRING": v = t.value; self.advance(); return v
+        
+        # INPUT logic
         if t.value == "INPUT":
-            self.advance(); self.advance() # (
+            self.advance(); self.advance()
             prompt = self.current.value if self.current.type == "STRING" else ""
             if prompt: self.advance()
-            self.advance() # )
+            self.advance()
             raw = input(prompt)
-            try: return float(raw) if "." in raw else int(raw)
-            except: return raw
+            # Try to convert to number, otherwise keep as string
+            try:
+                if "." in raw: return float(raw)
+                return int(raw)
+            except ValueError:
+                return raw
+
         if t.type == "IDENTIFIER":
-            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(": return self.execute_func_call()
-            val = self.variables.get(t.value, 0); self.advance(); return val
+            if t.value in self.structs: name = t.value; self.advance(); return name
+            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(": return self.call_func()
+            name = t.value; self.advance()
+            if self.current.value == ".":
+                self.advance(); m = self.current.value; self.advance()
+                obj = self.stack[-1].get(name, self.stack[0].get(name))
+                return obj.get(m, 0) if isinstance(obj, dict) else 0
+            return self.stack[-1].get(name, self.stack[0].get(name, 0))
         return 0

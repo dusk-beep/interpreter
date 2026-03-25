@@ -1,0 +1,27 @@
+# C-style Struct Definition
+ghatana Manushyan
+    peru
+    vayasu
+theerthu
+
+# Recursive Factorial Function
+pravarthanam factorial(n)
+    if (n == 1)
+        thirike 1
+    kainhu
+    thirike n * factorial(n - 1)
+kainhu
+
+namaskaram
+    # 1. Structure Test
+    m1 = Manushyan
+    m1.peru = "Rahul"
+    m1.vayasu = 20
+    ezhutuka(m1.peru)
+    ezhutuka(m1.vayasu)
+
+    # 2. Recursion Test
+    res = factorial(5)
+    ezhutuka("Factorial of 5 is:")
+    ezhutuka(res)
+nanni

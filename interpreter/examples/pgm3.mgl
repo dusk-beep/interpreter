@@ -1,0 +1,19 @@
+# Recursive Fibonacci Function
+pravarthanam fib(n)
+    if (n == 0)
+        thirike 0
+    if (n == 1)
+        thirike 1
+    
+    # Branching recursion: fib(n-1) + fib(n-2)
+    thirike fib(n - 1) + fib(n - 2)
+kainhu
+
+namaskaram
+    # Finding the 6th Fibonacci number (0, 1, 1, 2, 3, 5, 8...)
+    n = 6
+    result = fib(n)
+    
+    ezhutuka("Fibonacci series result for 6:")
+    ezhutuka(result)
+nanni

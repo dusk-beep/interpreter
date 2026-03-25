@@ -2,10 +2,12 @@ import re
 
 KEYWORDS = {
     "ezhutuka": "PRINT", "edukuka": "INPUT", "namaskaram": "ENTRY",
-    "nanni": "EXIT", "pravarthanam": "FUNCTION", "thirike": "RETURN", "kainhu": "FUNC_END"
+    "nanni": "EXIT", "pravarthanam": "FUNCTION", "thirike": "RETURN", 
+    "kainhu": "FUNC_END", "ghatana": "STRUCT", "theerthu": "STRUCT_END",
+    "if": "IF"
 }
 
-OPERATORS = ["+", "-", "*", "/", "=", "(", ")", ">", "<", "==", "!=", ">=", "<=", ",", "[", "]"]
+OPERATORS = ["+", "-", "*", "/", "=", "(", ")", ">", "<", "==", "!=", ">=", "<=", ",", ".", "[", "]"]
 
 class Token:
     def __init__(self, type_, value):
@@ -17,18 +19,17 @@ class Lexer:
     def __init__(self, text):
         self.text = text; self.tokens = []
     def tokenize(self):
-        lines = self.text.split("\n")
+        lines = [re.sub(r'#.*', '', line).strip() for line in self.text.split("\n")]
         for line in lines:
-            line = line.strip()
             if not line: continue
             string_pattern = r'"(.*?)"'
             strings = re.findall(string_pattern, line)
-            temp_line = re.sub(string_pattern, "STRING", line)
-            words = re.findall(r'\d+\.\d+|\w+|==|!=|>=|<=|[()\[\],+\-*/=><]', temp_line)
-            string_index = 0
+            temp_line = re.sub(string_pattern, "STR_VAL", line)
+            words = re.findall(r'\d+\.\d+|\w+|==|!=|>=|<=|[()\[\],+\-*/=><.]', temp_line)
+            str_idx = 0
             for word in words:
-                if word == "STRING":
-                    self.tokens.append(Token("STRING", strings[string_index])); string_index += 1
+                if word == "STR_VAL":
+                    self.tokens.append(Token("STRING", strings[str_idx])); str_idx += 1
                 elif word in KEYWORDS:
                     self.tokens.append(Token("KEYWORD", KEYWORDS[word]))
                 elif re.match(r'^\d+\.\d+$', word) or word.isdigit():

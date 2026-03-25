@@ -11,65 +11,27 @@ class Parser:
 
     def parse(self):
         while self.current.type != "EOF":
-            if self.current.value == "FUNCTION":
-                self.function_definition()
-            elif self.current.value == "ENTRY":
-                self.main_block()
-            else:
-                self.advance() # Skip junk/newlines outside blocks
+            if self.current.value == "FUNCTION": self.parse_function()
+            elif self.current.value == "STRUCT": self.parse_struct()
+            elif self.current.value == "ENTRY": self.parse_main()
+            else: self.advance()
         print("✅ Parsing Successful")
 
-    def main_block(self):
-        self.eat("KEYWORD", "ENTRY")
-        while self.current.value != "EXIT":
-            self.statement()
-        self.eat("KEYWORD", "EXIT")
+    def parse_struct(self):
+        self.eat("KEYWORD", "STRUCT"); self.eat("IDENTIFIER")
+        while self.current.value != "STRUCT_END": self.advance()
+        self.eat("KEYWORD", "STRUCT_END")
 
-    def function_definition(self):
-        self.eat("KEYWORD", "FUNCTION")
-        self.eat("IDENTIFIER") # name
-        self.eat("OPERATOR", "(")
+    def parse_function(self):
+        self.eat("KEYWORD", "FUNCTION"); self.eat("IDENTIFIER"); self.eat("OPERATOR", "(")
         while self.current.value != ")":
-            self.eat("IDENTIFIER")
+            if self.current.type == "IDENTIFIER": self.advance()
             if self.current.value == ",": self.advance()
         self.eat("OPERATOR", ")")
-        while self.current.value != "FUNC_END":
-            self.statement()
+        while self.current.value != "FUNC_END": self.advance()
         self.eat("KEYWORD", "FUNC_END")
 
-    def statement(self):
-        if self.current.value == "PRINT":
-            self.advance(); self.eat("OPERATOR", "("); self.expression(); self.eat("OPERATOR", ")")
-        elif self.current.value == "RETURN":
-            self.advance(); self.expression()
-        elif self.current.type == "IDENTIFIER":
-            self.advance()
-            if self.current.value == "=": self.advance(); self.expression()
-            elif self.current.value == "(": # call
-                self.advance()
-                while self.current.value != ")":
-                    self.expression()
-                    if self.current.value == ",": self.advance()
-                self.advance()
-        else: self.advance()
-
-    def expression(self):
-        self.term()
-        while self.current.value in ["+", "-"]: self.advance(); self.term()
-    def term(self):
-        self.factor()
-        while self.current.value in ["*", "/"]: self.advance(); self.factor()
-    def factor(self):
-        if self.current.type in ["NUMBER", "STRING", "IDENTIFIER"]:
-            if self.current.type == "IDENTIFIER" and self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(":
-                self.advance(); self.advance()
-                while self.current.value != ")":
-                    self.expression()
-                    if self.current.value == ",": self.advance()
-                self.advance()
-            else: self.advance()
-        elif self.current.value == "INPUT":
-            self.advance(); self.eat("OPERATOR", "(")
-            if self.current.type == "STRING": self.advance()
-            self.eat("OPERATOR", ")")
-        else: self.advance()
+    def parse_main(self):
+        self.eat("KEYWORD", "ENTRY")
+        while self.current.value != "EXIT": self.advance()
+        self.eat("KEYWORD", "EXIT")
