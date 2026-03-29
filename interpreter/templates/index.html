@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="ambient ambient-three"></div>
 
     <div id="splash" class="screen">
         <div class="diamond-wrapper">
@@ -30,12 +33,18 @@
             <section id="intro" class="tab-content active">
                 <div class="intro-shell">
                     <div class="intro-hero">
-                        <div>
+                        <div class="hero-copy">
                             <p class="intro-kicker">MONE_LANGUAGE_REFERENCE</p>
                             <h1>Learn every Manglish feature from one intro page.</h1>
                             <p class="intro-copy">
                                 Start with output, move through conditions, loops, functions, recursion, structs, and run every snippet directly in the playground.
                             </p>
+                            <div class="hero-pulse-row">
+                                <span class="pulse-chip">Print</span>
+                                <span class="pulse-chip">Logic</span>
+                                <span class="pulse-chip">Loops</span>
+                                <span class="pulse-chip">Structs</span>
+                            </div>
                         </div>
                         <div class="intro-badge">
                             <span>namaskaram</span>
@@ -48,7 +57,7 @@
                     </div>
 
                     <div class="feature-grid">
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">01_OUTPUT</p>
@@ -67,7 +76,7 @@
 nanni</code></pre>
                         </article>
 
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0.06s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">02_INPUT</p>
@@ -87,7 +96,7 @@ nanni</code></pre>
 nanni</code></pre>
                         </article>
 
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0.12s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">03_CONDITIONS</p>
@@ -114,7 +123,7 @@ nanni</code></pre>
 nanni</code></pre>
                         </article>
 
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0.18s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">04_FUNCTION</p>
@@ -139,7 +148,7 @@ namaskaram
 nanni</code></pre>
                         </article>
 
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0.24s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">05_RECURSION</p>
@@ -164,7 +173,7 @@ namaskaram
 nanni</code></pre>
                         </article>
 
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0.30s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">06_STRUCT</p>
@@ -189,7 +198,7 @@ namaskaram
 nanni</code></pre>
                         </article>
 
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0.36s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">07_FOR_LOOP</p>
@@ -207,7 +216,7 @@ nanni</code></pre>
 nanni</code></pre>
                         </article>
 
-                        <article class="feature-card">
+                        <article class="feature-card" style="--delay:0.42s">
                             <div class="feature-head">
                                 <div>
                                     <p class="feature-label">08_ARRAYS</p>
@@ -241,7 +250,7 @@ nanni</textarea>
                     <label for="stdin-input">// INPUT_BUFFER (one value per line)</label>
                     <textarea id="stdin-input" spellcheck="false" placeholder="2&#10;4"></textarea>
                 </div>
-                <button class="execute-btn" onclick="runManglish()">EXECUTE_BINARY</button>
+                <button class="execute-btn" onclick="runManglish()">Run</button>
             </section>
 
             <section id="output" class="tab-content">
