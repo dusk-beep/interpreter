@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+import builtins
 import sys
 import io
 
@@ -19,11 +20,26 @@ def index():
 def run_code():
     data = request.json
     code = data.get('code', '')
+    raw_inputs = data.get('inputs', [])
+    if isinstance(raw_inputs, str):
+        input_values = raw_inputs.splitlines()
+    else:
+        input_values = [str(item) for item in raw_inputs]
     
     output_capture = io.StringIO()
     sys.stdout = output_capture
+    original_input = builtins.input
+    input_iter = iter(input_values)
+
+    def browser_input(prompt=""):
+        print(prompt, end="")
+        try:
+            return next(input_iter)
+        except StopIteration:
+            raise EOFError("Not enough input values provided for eduku()")
     
     try:
+        builtins.input = browser_input
         lexer = Lexer(code)
         tokens = lexer.tokenize()
         
@@ -34,6 +50,7 @@ def run_code():
     except Exception as e:
         result = f"SYSTEM_ERROR >> {str(e)}"
     finally:
+        builtins.input = original_input
         sys.stdout = sys.__stdout__ 
         
     return jsonify({"output": result})

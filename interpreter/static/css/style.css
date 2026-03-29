@@ -2,12 +2,19 @@
     --neon: #00ff41;
     --dark: #050505;
     --glass: rgba(0, 255, 65, 0.1);
+    --panel: #0f1020;
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --accent: #ff5a36;
+    --soft: #f6dfd7;
 }
 
 body {
-    background-color: var(--dark);
+    background:
+        radial-gradient(circle at top left, rgba(255, 90, 54, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(0, 255, 65, 0.12), transparent 28%),
+        linear-gradient(180deg, #15142a 0%, #0a0914 55%, #050505 100%);
     color: var(--neon);
-    font-family: 'Courier New', monospace;
+    font-family: 'Consolas', 'Courier New', monospace;
     margin: 0; overflow: hidden;
     height: 100vh;
 }
@@ -37,27 +44,202 @@ body::after {
 .enter-btn:hover { text-shadow: 0 0 15px var(--neon); transform: scale(1.1); }
 
 /* Navigation */
-nav { display: flex; border-bottom: 1px solid var(--neon); background: #111; }
-.nav-item { padding: 15px 30px; cursor: pointer; border-right: 1px solid #333; }
-.nav-item.active { background: var(--neon); color: black; font-weight: bold; }
+nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(8, 8, 18, 0.82); backdrop-filter: blur(12px); }
+.nav-item { padding: 15px 30px; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); color: #d6d2ea; }
+.nav-item.active { background: var(--accent); color: white; font-weight: bold; }
 
 /* Tabs */
-.tab-content { display: none; padding: 30px; height: 70vh; }
+.content-area { height: calc(100vh - 62px); }
+.tab-content { display: none; padding: 30px; height: calc(100vh - 122px); overflow-y: auto; box-sizing: border-box; }
 .tab-content.active { display: block; }
 
+.intro-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+}
+
+.intro-hero {
+    display: grid;
+    grid-template-columns: 1.4fr 0.9fr;
+    gap: 24px;
+    align-items: stretch;
+    margin-bottom: 28px;
+}
+
+.intro-kicker {
+    color: #ffb39d;
+    letter-spacing: 0.2em;
+    font-size: 0.8rem;
+    margin: 0 0 12px 0;
+}
+
+.intro-hero h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.7rem);
+    line-height: 1;
+    color: #fff7f2;
+    max-width: 12ch;
+}
+
+.intro-copy {
+    margin: 18px 0 0 0;
+    max-width: 62ch;
+    color: #d7d2e9;
+    line-height: 1.7;
+}
+
+.intro-badge {
+    background: linear-gradient(160deg, rgba(255, 90, 54, 0.2), rgba(14, 14, 31, 0.92));
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 26px;
+    padding: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 12px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+
+.intro-badge span {
+    background: rgba(255,255,255,0.06);
+    color: #fff1ea;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.feature-card {
+    background: linear-gradient(180deg, rgba(17, 18, 35, 0.96), rgba(9, 9, 18, 0.96));
+    border: 1px solid var(--panel-border);
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.feature-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.feature-label {
+    margin: 0 0 10px 0;
+    color: #ff9b7f;
+    letter-spacing: 0.16em;
+    font-size: 0.78rem;
+}
+
+.feature-head h3 {
+    margin: 0;
+    color: #fff7f2;
+    font-size: 1.35rem;
+}
+
+.feature-card p {
+    color: #cec8e3;
+    line-height: 1.7;
+}
+
+.feature-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.mini-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #f6dfd7;
+    border-radius: 999px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.mini-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.mini-btn.accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.code-box {
+    margin: 18px 0 0 0;
+    background: #2d2d2d;
+    color: #f1efe9;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 18px;
+    overflow-x: auto;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
 #editor {
-    width: 100%; height: 80%; background: #000; color: var(--neon);
-    border: 1px solid var(--neon); padding: 20px; font-family: monospace;
-    font-size: 1.1rem; outline: none; box-sizing: border-box;
+    width: 100%; height: 60%; background: #202020; color: #f3f0e8;
+    border: 1px solid rgba(255,255,255,0.12); padding: 20px; font-family: monospace;
+    font-size: 1.05rem; outline: none; box-sizing: border-box; border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+.input-panel {
+    margin-top: 16px;
+}
+
+.input-panel label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    color: #8cffb0;
+}
+
+#stdin-input {
+    width: 100%;
+    min-height: 90px;
+    background: #16161d;
+    color: #fff3eb;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 14px;
+    font-family: monospace;
+    font-size: 1rem;
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
+    border-radius: 18px;
 }
 
 .execute-btn {
-    margin-top: 20px; padding: 10px 40px; background: transparent;
-    color: var(--neon); border: 1px solid var(--neon); cursor: pointer;
+    margin-top: 20px; padding: 12px 40px; background: var(--accent);
+    color: white; border: 1px solid var(--accent); cursor: pointer; border-radius: 14px;
 }
-.execute-btn:hover { background: var(--neon); color: black; }
+.execute-btn:hover { filter: brightness(1.08); }
 
 #terminal-output {
-    background: black; padding: 20px; height: 80%; border: 1px solid #333;
-    white-space: pre-wrap; color: #aaa;
+    background: #101016; padding: 20px; height: 80%; border: 1px solid rgba(255,255,255,0.08);
+    white-space: pre-wrap; color: #f2efe7; border-radius: 22px;
+}
+
+@media (max-width: 960px) {
+    .intro-hero,
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .feature-head {
+        flex-direction: column;
+    }
+
+    nav {
+        overflow-x: auto;
+    }
 }

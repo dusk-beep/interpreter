@@ -4,7 +4,7 @@ pravarthanam kootuka(a,b)
 }
 
 namaskaram
-	a=10.3
+	a=10
 	b=20
 	c=kootuka(a,b)
 	eyutu c

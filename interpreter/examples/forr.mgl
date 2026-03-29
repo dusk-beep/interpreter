@@ -1,5 +1,5 @@
 namaskaram
 
-	avarthikuka(i=1;i<10;i=i+2)
+	avarthikuka(i=1;i<4;i++)
 		ezhutu "hello{i}"
 nanni

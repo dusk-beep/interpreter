@@ -1,5 +1,5 @@
 namaskaram
-	a=0
+	a=10
 	anengil(a>8)
 	{
 		parayu "{a}>8"

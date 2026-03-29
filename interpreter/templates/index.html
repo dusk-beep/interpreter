@@ -28,12 +28,207 @@
 
         <div class="content-area">
             <section id="intro" class="tab-content active">
-                <h2>// SYSTEM_MANUAL</h2>
-                <div class="manual-entry">
-                    <h3>> KEYWORDS</h3>
-                    <p><code>namaskaram</code> : Entry Point<br>
-                    <code>ezhutuka</code> : Output Command<br>
-                    <code>ghatana</code> : Structure Definition</p>
+                <div class="intro-shell">
+                    <div class="intro-hero">
+                        <div>
+                            <p class="intro-kicker">MONE_LANGUAGE_REFERENCE</p>
+                            <h1>Learn every Manglish feature from one intro page.</h1>
+                            <p class="intro-copy">
+                                Start with output, move through conditions, loops, functions, recursion, structs, and run every snippet directly in the playground.
+                            </p>
+                        </div>
+                        <div class="intro-badge">
+                            <span>namaskaram</span>
+                            <span>parayu</span>
+                            <span>anengil</span>
+                            <span>pravarthanam</span>
+                            <span>ghatana</span>
+                            <span>avarthikuka</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-grid">
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">01_OUTPUT</p>
+                                    <h3>`parayu` / print</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this)">Use</button>
+                                </div>
+                            </div>
+                            <p>Print numbers, strings, and interpolated values like `{a}`.</p>
+                            <pre class="code-box"><code>namaskaram
+    a=10
+    parayu a
+    parayu "Thank you"
+nanni</code></pre>
+                        </article>
+
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">02_INPUT</p>
+                                    <h3>`eduku` / input</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this, '2\n4')">Use</button>
+                                </div>
+                            </div>
+                            <p>Use cast syntax like `(int)eduku` and provide browser input one line at a time.</p>
+                            <pre class="code-box"><code>namaskaram
+    a=(int)eduku "no1:"
+    b=(int)eduku "no2:"
+    sum=a+b
+    parayu "sum:{sum}"
+nanni</code></pre>
+                        </article>
+
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">03_CONDITIONS</p>
+                                    <h3>`anengil`, `anengil enkil`, `allengil`</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this)">Use</button>
+                                </div>
+                            </div>
+                            <p>Single-line blocks are allowed, and curly braces are needed for multi-line blocks.</p>
+                            <pre class="code-box"><code>namaskaram
+    a=10
+    anengil(a>8)
+    {
+        parayu "{a}>8"
+    }
+    anengil enkil(a&lt;0)
+    {
+        parayu "{a}&lt;0"
+    }
+    allengil
+        parayu "{a}&lt;8"
+nanni</code></pre>
+                        </article>
+
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">04_FUNCTION</p>
+                                    <h3>`pravarthanam` / function</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this)">Use</button>
+                                </div>
+                            </div>
+                            <p>Create reusable logic and return values with `thirike kodku`.</p>
+                            <pre class="code-box"><code>pravarthanam kootuka(a,b)
+{
+    thirike kodku (a+b)
+}
+
+namaskaram
+    a=10
+    b=20
+    c=kootuka(a,b)
+    parayu c
+nanni</code></pre>
+                        </article>
+
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">05_RECURSION</p>
+                                    <h3>Recursive function</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this)">Use</button>
+                                </div>
+                            </div>
+                            <p>Functions can call themselves, so recursion works for factorial-style problems.</p>
+                            <pre class="code-box"><code>pravarthanam fact(n)
+{
+    anengil(n==0)
+        thirike kodku 1
+    allengil
+        thirike kodku n*fact(n-1)
+}
+
+namaskaram
+    parayu fact(5)
+nanni</code></pre>
+                        </article>
+
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">06_STRUCT</p>
+                                    <h3>`ghatana` / struct</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this)">Use</button>
+                                </div>
+                            </div>
+                            <p>Define a custom structure once and access members with dot notation.</p>
+                            <pre class="code-box"><code>ghatana student
+{
+    per="lavanya"
+    vays=10
+};
+
+namaskaram
+    ghatana student s;
+    parayu s.per
+    parayu s.vays
+nanni</code></pre>
+                        </article>
+
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">07_FOR_LOOP</p>
+                                    <h3>`avarthikuka` / for</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this)">Use</button>
+                                </div>
+                            </div>
+                            <p>C-style loop syntax is supported, including `i++` update expressions.</p>
+                            <pre class="code-box"><code>namaskaram
+    avarthikuka(i=1;i&lt;4;i++)
+        parayu "hello{i}"
+nanni</code></pre>
+                        </article>
+
+                        <article class="feature-card">
+                            <div class="feature-head">
+                                <div>
+                                    <p class="feature-label">08_ARRAYS</p>
+                                    <h3>Arrays and datatypes</h3>
+                                </div>
+                                <div class="feature-actions">
+                                    <button class="mini-btn" onclick="copyExample(this)">Copy</button>
+                                    <button class="mini-btn accent" onclick="useExample(this)">Use</button>
+                                </div>
+                            </div>
+                            <p>Use array literals, integer and float values, chars, strings, and indexed access.</p>
+                            <pre class="code-box"><code>namaskaram
+    markukal[]={1,2,3,4}
+    vyaktata[]={1.1,2.2}
+    avarthikuka(i=0;i&lt;4;i++)
+        parayu markukal[i]
+    parayu vyaktata[0]
+    parayu vyaktata[1]
+nanni</code></pre>
+                        </article>
+                    </div>
                 </div>
             </section>
 
@@ -42,6 +237,10 @@
 namaskaram
     ezhutuka("Hello World")
 nanni</textarea>
+                <div class="input-panel">
+                    <label for="stdin-input">// INPUT_BUFFER (one value per line)</label>
+                    <textarea id="stdin-input" spellcheck="false" placeholder="2&#10;4"></textarea>
+                </div>
                 <button class="execute-btn" onclick="runManglish()">EXECUTE_BINARY</button>
             </section>
 
