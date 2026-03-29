@@ -1,33 +1,16 @@
 import sys
-import os
 
-# Priority to local files fixes "ImportError: cannot import name 'Parser' from 'parser'"
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
+from interpreter import Interpreter
 from lexer import Lexer
 from myparser import Parser
-from interpreter import Interpreter
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python main.py <filename.mgl>")
-        return
-    
-    filename = sys.argv[1]
-    try:
-        with open(filename, "r") as f:
-            code = f.read()
+if len(sys.argv) < 2:
+    print("Usage: python main.py <file>")
+    exit()
 
-        lexer = Lexer(code)
-        tokens = lexer.tokenize()
+with open(sys.argv[1], "r") as f:
+    code = f.read()
 
-        parser = Parser(tokens)
-        parser.parse()
-
-        interpreter = Interpreter(tokens)
-        interpreter.run()
-    except Exception as e:
-        print(f"❌ Error: {e}")
-
-if __name__ == "__main__":
-    main()
+tokens = Lexer(code).tokenize()
+ast = Parser(tokens).parse()
+Interpreter(ast).run()

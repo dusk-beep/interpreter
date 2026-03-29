@@ -1,6 +1,6 @@
 import pytest
 from lexer import Lexer
-from parser import Parser, ParserError
+from interpreter.myparser import Parser, ParserError
 
 
 def parse_code(code):

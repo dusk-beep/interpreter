@@ -1,173 +1,341 @@
-class Interpreter:
-    def __init__(self, tokens):
-        self.tokens = tokens; self.pos = 0; self.current = self.tokens[self.pos]
-        self.functions = {}; self.structs = {}; self.stack = [{}]; 
-        self.ret_val = 0; self.is_ret = False
+import copy
+import re
 
-    def advance(self):
-        self.pos += 1
-        if self.pos < len(self.tokens): self.current = self.tokens[self.pos]
+from myparser import (
+    ArrayLiteral,
+    Assignment,
+    BinaryExpression,
+    Block,
+    CallExpression,
+    CastExpression,
+    ExpressionStatement,
+    ForStatement,
+    FunctionDefinition,
+    IfStatement,
+    IndexAccess,
+    InputExpression,
+    Literal,
+    MemberAccess,
+    PrintStatement,
+    Program,
+    ReturnStatement,
+    StructDeclaration,
+    UnaryExpression,
+    Variable,
+)
+
+
+class InterpreterError(Exception):
+    pass
+
+
+class ReturnSignal(Exception):
+    def __init__(self, value):
+        self.value = value
+
+
+class Environment:
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.values = {}
+
+    def define(self, name, value):
+        self.values[name] = value
+
+    def contains_here(self, name):
+        return name in self.values
+
+    def contains(self, name):
+        if name in self.values:
+            return True
+        if self.parent is not None:
+            return self.parent.contains(name)
+        return False
+
+    def assign(self, name, value):
+        if name in self.values:
+            self.values[name] = value
+            return
+        if self.parent is not None and self.parent.contains(name):
+            self.parent.assign(name, value)
+            return
+        self.values[name] = value
+
+    def get(self, name):
+        if name in self.values:
+            return self.values[name]
+        if self.parent is not None:
+            return self.parent.get(name)
+        raise InterpreterError(f"Undefined variable '{name}'")
+
+
+class Interpreter:
+    def __init__(self, program):
+        if not isinstance(program, Program):
+            try:
+                from myparser import Parser
+
+                program = Parser(program).parse()
+            except Exception as exc:
+                raise InterpreterError("Interpreter expects the parsed AST from Parser.parse()") from exc
+        self.program = program
+        self.global_env = Environment()
 
     def run(self):
-        # Pre-scan for Structs and Functions
-        idx = 0
-        while idx < len(self.tokens):
-            if self.tokens[idx].value == "FUNCTION": self.functions[self.tokens[idx+1].value] = idx
-            if self.tokens[idx].value == "STRUCT":
-                name = self.tokens[idx+1].value; members = []; j = idx + 2
-                while self.tokens[j].value != "STRUCT_END":
-                    if self.tokens[j].type == "IDENTIFIER": members.append(self.tokens[j].value)
-                    j += 1
-                self.structs[name] = members
-            idx += 1
-            
-        entry = next((i for i, t in enumerate(self.tokens) if t.value == "ENTRY"), None)
-        if entry is not None:
-            self.pos = entry; self.advance()
-            while self.current.value != "EXIT":
-                self.execute()
-                # Safety break if return happens in main
-                if self.is_ret: break
-        print("✅ Program Finished")
+        self._execute_block(self.program.main, self.global_env)
 
-    def execute(self):
-        if self.is_ret: return 
-        
-        if self.current.value in ["FUNCTION", "STRUCT"]:
-            target = "FUNC_END" if self.current.value == "FUNCTION" else "STRUCT_END"
-            while self.current.value != target: self.advance()
-            self.advance()
-        elif self.current.value == "IF":
-            self.advance(); self.advance() # if (
-            cond = self.eval_expr(); self.advance() # )
-            if cond: 
-                self.execute()
-            else:
-                # Skip the statement if condition is false
-                while self.current.type != "NEWLINE" and self.current.type != "EOF": self.advance()
-                self.advance()
-        elif self.current.value == "PRINT":
-            self.advance(); self.advance(); print(self.eval_expr()); self.advance()
-        elif self.current.value == "RETURN":
-            self.advance()
-            self.ret_val = self.eval_expr()
-            self.is_ret = True # Signal that we hit a return statement
-        elif self.current.type == "IDENTIFIER":
-            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(": self.call_func()
-            else: self.assign()
-        else: self.advance()
+    def _execute_block(self, block, env):
+        for statement in block.statements:
+            self._execute(statement, env)
 
-    def assign(self):
-        name = self.current.value; self.advance()
-        if self.current.value == ".":
-            self.advance(); member = self.current.value; self.advance(); self.advance()
-            val = self.eval_expr()
-            obj = self.stack[-1].get(name, self.stack[0].get(name))
-            if isinstance(obj, dict): obj[member] = val
-        else:
-            self.advance(); val = self.eval_expr()
-            if val in self.structs: self.stack[-1][name] = {m: 0 for m in self.structs[val]}
-            else: self.stack[-1][name] = val
+    def _execute(self, statement, env):
+        if isinstance(statement, Assignment):
+            value = self._evaluate(statement.value, env)
+            self._assign_target(statement.target, value, env)
+            return value
 
-    def call_func(self):
-        name = self.current.value; self.advance(); self.advance() # name (
-        args = []
-        while self.current.value != ")":
-            args.append(self.eval_expr())
-            if self.current.value == ",": self.advance()
-        self.advance() # )
+        if isinstance(statement, PrintStatement):
+            value = self._evaluate(statement.expression, env)
+            print(self._stringify(value, env))
+            return None
 
-        if name in self.functions:
-            old_pos = self.pos
-            self.pos = self.functions[name]
-            self.advance(); self.advance(); self.advance() # func name (
-            
-            params = []
-            while self.current.value != ")":
-                params.append(self.current.value); self.advance()
-                if self.current.value == ",": self.advance()
-            self.advance() # )
+        if isinstance(statement, ExpressionStatement):
+            return self._evaluate(statement.expression, env)
 
-            # RECURSION FIX: Create new frame
-            new_frame = {params[i]: args[i] for i in range(min(len(params), len(args)))}
-            self.stack.append(new_frame)
-            
-            # Save the caller's return state
-            old_is_ret = self.is_ret 
-            self.is_ret = False # Reset for the new function execution
-            
-            while self.current.value != "FUNC_END" and not self.is_ret:
-                self.execute()
-            
-            # Capture the result of this specific call
-            result = self.ret_val 
-            
-            self.stack.pop()
-            self.pos = old_pos
-            self.current = self.tokens[self.pos]
-            
-            # CRITICAL FIX: Reset is_ret so the parent can continue its calculation
-            self.is_ret = old_is_ret 
-            return result
-        return 0
+        if isinstance(statement, IfStatement):
+            for condition, block in statement.branches:
+                if self._is_truthy(self._evaluate(condition, env)):
+                    self._execute_block(block, Environment(env))
+                    return None
+            if statement.else_block is not None:
+                self._execute_block(statement.else_block, Environment(env))
+            return None
 
-    def eval_expr(self):
-        left = self.eval_term()
-        while self.current.value in ["+", "-", "==", "!=", ">", "<", ">=", "<="]:
-            op = self.current.value; self.advance(); right = self.eval_term()
-            # RECURSION FIX: If right side returned, clear flag so we can finish this operation
-            if self.is_ret: self.is_ret = False
-            
-            if op == "+":
-                if isinstance(left, str) or isinstance(right, str): left = str(left) + str(right)
-                else: left += right
-            elif op == "-": left -= right
-            elif op == "==": left = 1 if left == right else 0
-            elif op == "!=": left = 1 if left != right else 0
-            elif op == ">": left = 1 if left > right else 0
-            elif op == "<": left = 1 if left < right else 0
-            elif op == ">=": left = 1 if left >= right else 0
-            elif op == "<=": left = 1 if left <= right else 0
-        return left
+        if isinstance(statement, ForStatement):
+            loop_env = Environment(env)
+            if statement.init is not None:
+                self._execute(statement.init, loop_env)
+            while self._is_truthy(self._evaluate(statement.condition, loop_env)):
+                self._execute_block(statement.body, Environment(loop_env))
+                if statement.update is not None:
+                    self._execute(statement.update, loop_env)
+            return None
 
-    def eval_term(self):
-        left = self.eval_fact()
-        while self.current.value in ["*", "/"]:
-            op = self.current.value; self.advance(); right = self.eval_fact()
-            # RECURSION FIX: Same check for multiplication/division
-            if self.is_ret: self.is_ret = False
-            
-            left = (left * right) if op == "*" else (left / right)
-        return left
+        if isinstance(statement, ReturnStatement):
+            raise ReturnSignal(self._evaluate(statement.expression, env))
 
-    def eval_fact(self):
-        t = self.current
-        if t.type == "NUMBER":
-            v = float(t.value) if "." in t.value else int(t.value); self.advance(); return v
-        if t.type == "STRING": v = t.value; self.advance(); return v
-        
-        if t.value == "INPUT":
-            self.advance(); self.advance()
-            prompt = self.current.value if self.current.type == "STRING" else ""
-            if prompt: self.advance()
-            self.advance()
-            raw = input(prompt)
+        if isinstance(statement, StructDeclaration):
+            env.define(statement.variable_name, self._create_struct_instance(statement.struct_name, env))
+            return None
+
+        raise InterpreterError(f"Unsupported statement type: {type(statement).__name__}")
+
+    def _evaluate(self, expr, env):
+        if isinstance(expr, Literal):
+            return expr.value
+
+        if isinstance(expr, Variable):
+            return env.get(expr.name)
+
+        if isinstance(expr, ArrayLiteral):
+            return [self._evaluate(element, env) for element in expr.elements]
+
+        if isinstance(expr, MemberAccess):
+            obj = self._evaluate(expr.obj, env)
+            if not isinstance(obj, dict):
+                raise InterpreterError(f"'{self._describe_target(expr.obj)}' is not a struct")
+            if expr.member not in obj:
+                raise InterpreterError(f"Struct field '{expr.member}' is not defined")
+            return obj[expr.member]
+
+        if isinstance(expr, IndexAccess):
+            obj = self._evaluate(expr.obj, env)
+            index = self._evaluate(expr.index, env)
+            if not isinstance(index, int):
+                raise InterpreterError("Array index must be an integer")
             try:
-                if "." in raw: return float(raw)
-                return int(raw)
-            except: return raw
+                return obj[index]
+            except (TypeError, IndexError):
+                raise InterpreterError("Array index out of range")
 
-        if t.type == "IDENTIFIER":
-            if t.value in self.structs: 
-                name = t.value; self.advance(); return name
-            # Check if this identifier is being used to call a function
-            if self.pos+1 < len(self.tokens) and self.tokens[self.pos+1].value == "(":
-                return self.call_func()
-            
-            name = t.value; self.advance()
-            if self.current.value == ".":
-                self.advance(); m = self.current.value; self.advance()
-                obj = self.stack[-1].get(name, self.stack[0].get(name))
-                return obj.get(m, 0) if isinstance(obj, dict) else 0
-            return self.stack[-1].get(name, self.stack[0].get(name, 0))
-        return 0
+        if isinstance(expr, UnaryExpression):
+            value = self._evaluate(expr.operand, env)
+            if expr.operator == "-":
+                return -value
+            if expr.operator == "+":
+                return value
+            raise InterpreterError(f"Unsupported unary operator '{expr.operator}'")
+
+        if isinstance(expr, BinaryExpression):
+            left = self._evaluate(expr.left, env)
+            right = self._evaluate(expr.right, env)
+            return self._apply_binary(expr.operator, left, right)
+
+        if isinstance(expr, InputExpression):
+            prompt = self._stringify(self._evaluate(expr.prompt, env), env)
+            raw = input(prompt)
+            return self._auto_convert(raw)
+
+        if isinstance(expr, CastExpression):
+            value = self._evaluate(expr.expression, env)
+            return self._cast_value(expr.cast_type, value)
+
+        if isinstance(expr, CallExpression):
+            return self._call_function(expr.callee, expr.args, env)
+
+        if isinstance(expr, Assignment):
+            value = self._evaluate(expr.value, env)
+            self._assign_target(expr.target, value, env)
+            return value
+
+        raise InterpreterError(f"Unsupported expression type: {type(expr).__name__}")
+
+    def _apply_binary(self, operator, left, right):
+        if operator == "+":
+            if isinstance(left, str) or isinstance(right, str):
+                return self._stringify(left, self.global_env) + self._stringify(right, self.global_env)
+            return left + right
+        if operator == "-":
+            return left - right
+        if operator == "*":
+            return left * right
+        if operator == "/":
+            return left / right
+        if operator == "%":
+            return left % right
+        if operator == "==":
+            return 1 if left == right else 0
+        if operator == "!=":
+            return 1 if left != right else 0
+        if operator == ">":
+            return 1 if left > right else 0
+        if operator == "<":
+            return 1 if left < right else 0
+        if operator == ">=":
+            return 1 if left >= right else 0
+        if operator == "<=":
+            return 1 if left <= right else 0
+        raise InterpreterError(f"Unsupported operator '{operator}'")
+
+    def _assign_target(self, target, value, env):
+        if isinstance(target, Variable):
+            env.assign(target.name, value)
+            return
+
+        if isinstance(target, MemberAccess):
+            obj = self._evaluate(target.obj, env)
+            if not isinstance(obj, dict):
+                raise InterpreterError("Only struct members can be assigned with '.'")
+            obj[target.member] = value
+            return
+
+        if isinstance(target, IndexAccess):
+            obj = self._evaluate(target.obj, env)
+            index = self._evaluate(target.index, env)
+            if not isinstance(index, int):
+                raise InterpreterError("Array index must be an integer")
+            if not isinstance(obj, list):
+                raise InterpreterError("Index assignment requires an array")
+            if index < 0 or index >= len(obj):
+                raise InterpreterError("Array index out of range")
+            obj[index] = value
+            return
+
+        raise InterpreterError("Invalid assignment target")
+
+    def _call_function(self, name, arg_exprs, env):
+        function = self.program.functions.get(name)
+        if function is None:
+            raise InterpreterError(f"Undefined function '{name}'")
+
+        args = [self._evaluate(arg, env) for arg in arg_exprs]
+        if len(args) != len(function.params):
+            raise InterpreterError(
+                f"Function '{name}' expects {len(function.params)} arguments but got {len(args)}"
+            )
+
+        call_env = Environment(self.global_env)
+        for param, value in zip(function.params, args):
+            call_env.define(param, value)
+
+        try:
+            self._execute_block(function.body, call_env)
+        except ReturnSignal as signal:
+            return signal.value
+        return None
+
+    def _create_struct_instance(self, struct_name, env):
+        struct_def = self.program.structs.get(struct_name)
+        if struct_def is None:
+            raise InterpreterError(f"Undefined struct '{struct_name}'")
+
+        instance = {}
+        for field_name, expr in struct_def.fields.items():
+            instance[field_name] = copy.deepcopy(self._evaluate(expr, env))
+        return instance
+
+    def _cast_value(self, cast_type, value):
+        cast_type = cast_type.lower()
+        if cast_type == "int":
+            if isinstance(value, str) and value.strip() == "":
+                return 0
+            return int(float(value))
+        if cast_type == "float":
+            return float(value)
+        if cast_type == "string":
+            return self._stringify(value, self.global_env)
+        if cast_type == "char":
+            text = self._stringify(value, self.global_env)
+            return text[0] if text else ""
+        raise InterpreterError(f"Unsupported cast type '{cast_type}'")
+
+    def _auto_convert(self, raw):
+        text = raw.strip()
+        if text == "":
+            return ""
+        try:
+            if "." in text:
+                return float(text)
+            return int(text)
+        except ValueError:
+            return raw
+
+    def _is_truthy(self, value):
+        return value not in (0, 0.0, "", None, False)
+
+    def _stringify(self, value, env):
+        if isinstance(value, str):
+            return self._interpolate_string(value, env)
+        if isinstance(value, list):
+            return "[" + ", ".join(self._stringify(item, env) for item in value) + "]"
+        if isinstance(value, dict):
+            parts = [f"{key}: {self._stringify(item, env)}" for key, item in value.items()]
+            return "{ " + ", ".join(parts) + " }"
+        return str(value)
+
+    def _interpolate_string(self, text, env):
+        pattern = re.compile(r"\{([^{}]+)\}")
+
+        def replace(match):
+            expression_text = match.group(1).strip()
+            try:
+                from lexer import Lexer
+                from myparser import Parser
+
+                tokens = Lexer(expression_text).tokenize()
+                parser = Parser(tokens)
+                expression = parser._parse_expression()
+                return self._stringify(self._evaluate(expression, env), env)
+            except Exception:
+                return match.group(0)
+
+        return pattern.sub(replace, text)
+
+    def _describe_target(self, expr):
+        if isinstance(expr, Variable):
+            return expr.name
+        if isinstance(expr, MemberAccess):
+            return f"{self._describe_target(expr.obj)}.{expr.member}"
+        if isinstance(expr, IndexAccess):
+            return f"{self._describe_target(expr.obj)}[...]"
+        return type(expr).__name__

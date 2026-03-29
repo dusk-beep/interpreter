@@ -1,0 +1,13 @@
+namaskaram
+	a=0
+	anengil(a>8)
+	{
+		parayu "{a}>8"
+	}
+	anengil enkil(a<0)
+	{
+		parayu "{a}<0"
+ 	}
+	allengil
+		parayu "{a}<8"
+nanni

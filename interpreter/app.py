@@ -27,11 +27,8 @@ def run_code():
         lexer = Lexer(code)
         tokens = lexer.tokenize()
         
-        parser = Parser(tokens)
-        parser.parse()
-        
-        interpreter = Interpreter(tokens)
-        interpreter.run()
+        ast = Parser(tokens).parse()
+        Interpreter(ast).run()
         
         result = output_capture.getvalue()
     except Exception as e:

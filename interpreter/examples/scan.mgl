@@ -1,0 +1,6 @@
+namaskaram
+	a=(int)eduku "no1:"
+	b=(int)eduku "no2:"
+	sum=a+b
+	parayu "sum:{sum}"
+nanni

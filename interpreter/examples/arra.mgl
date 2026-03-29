@@ -1,0 +1,9 @@
+namaskaram
+	markukal[]={1,2,3,4}
+	vyaktata[]={1.1,2.2}
+	avarthikuka(i=0;i<4;i++)
+		parayu markukal[i]
+	
+	parayuka vyaktata[0]
+	parayuka vyaktata[1]
+nanni

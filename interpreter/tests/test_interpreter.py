@@ -1,6 +1,6 @@
 import pytest
 from lexer import Lexer
-from parser import Parser
+from interpreter.myparser import Parser
 from interpreter import Interpreter
 
 

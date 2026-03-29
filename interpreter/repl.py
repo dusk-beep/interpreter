@@ -7,11 +7,8 @@ def run_code(code):
     lexer = Lexer(code)
     tokens = lexer.tokenize()
 
-    parser = Parser(tokens)
-    parser.parse()
-
-    interpreter = Interpreter(tokens)
-    interpreter.run()
+    ast = Parser(tokens).parse()
+    Interpreter(ast).run()
 
 
 def repl():

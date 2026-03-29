@@ -1,0 +1,11 @@
+pravarthanam kootuka(a,b)
+{
+	thirike kodku (a+b)
+}
+
+namaskaram
+	a=10.3
+	b=20
+	c=kootuka(a,b)
+	eyutu c
+nanni

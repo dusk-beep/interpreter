@@ -1,0 +1,7 @@
+namaskaram
+	a=10
+	b=1.1
+	c='f'
+	d="hello"
+	parayu "{a},{b},{c},{d}"
+nanni
